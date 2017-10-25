@@ -1,38 +1,22 @@
-var express = require('express'),
-    steam   = require('steam-login');
-
+var express = require('express');
+var bodyParser = require('body-parser');
 var app = express();
-app.use(require('express-session')({ resave: false, saveUninitialized: false, secret: 'a secret' }));
-app.use(steam.middleware({
-    realm: 'http://localhost:3000/',
-    verify: 'http://localhost:3000/verify',
-    apiKey: 'C99EAB7D002F75FC3B0FDB694D2EB73C'}
-));
 
-app.get('/authenticate', steam.authenticate(), function(req, res) {
-    res.redirect('/');
-});
-app.get('/new', function(req, res){
-    logIn();
-});
-app.get('/verify', steam.verify(), function(req, res) {
-    res.setHeader('Content-Type', 'application/json');
-    res.send(JSON.stringify({ id: req.user.steamid, username: req.user.username }));
+
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  next();
 });
 
-app.get('/logout', steam.enforceLogin('/'), function(req, res) {
-    req.logout();
-    res.redirect('/');
-});
-app.get('/', function(req, res) {
-  console.log('shit');
-        res.sendfile('./public/src/index.html'); // load the single view file (angular will handle the page changes on the front-end)
-    });
+app.post('/nameToID',function(req, res) {
 
-function logIn(){
-  get('/authenticate', steam.authenticate(), function(req, res) {
-      res.redirect('/');
-  });
-}
-app.listen(3000);
+    var returnObj = {};
+    returnObj.userID = 192939;
+    returnObj.userName = 'Doggerdoo';
+    res.end(JSON.stringify(returnObj)); //send just the JSON object
+    console.log(req.body);
+  //  res.send(data);
+    //res.send('http://steamcommunity.com/openid/login?openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.return_to=http%3A%2F%2Flocalhost%3A4200%2Fverify&openid.realm=http%3A%2F%2Flocalhost%3A4200%2F');
+});
+app.listen(4200);
 console.log('listenin hbhg');
