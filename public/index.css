@@ -1,0 +1,62 @@
+/* You can add global styles to this file, and also import other style files */
+body {
+  background-color: #242f39;
+  background-image: url("images/background.jpg");
+}
+@font-face {
+    font-family: 'Radiance';
+    src: url('http://cdn.dota2.com/apps/dota2/fonts/radiance.eot');
+    src: url('http://cdn.dota2.com/apps/dota2/fonts/radiance.eot?#iefix') format('embedded-opentype'),
+         url('http://cdn.dota2.com/apps/dota2/fonts/radiance.woff') format('woff'),
+         url('http://cdn.dota2.com/apps/dota2/fonts/radiance.ttf') format('truetype'),
+         url('http://cdn.dota2.com/apps/dota2/fonts/radiance.svg#ywftsvg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Radiance-Bold';
+    src: url('http://cdn.dota2.com/apps/dota2/fonts/radiance-bold.eot');
+    src: url('http://cdn.dota2.com/apps/dota2/fonts/radiance-bold.eot?#iefix') format('embedded-opentype'),
+         url('http://cdn.dota2.com/apps/dota2/fonts/radiance-bold.woff') format('woff'),
+         url('http://cdn.dota2.com/apps/dota2/fonts/radiance-bold.ttf') format('truetype'),
+         url('http://cdn.dota2.com/apps/dota2/fonts/radiance-bold.svg#ywftsvg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Radiance-SemiBold';
+    src: url('http://cdn.dota2.com/apps/dota2/fonts/radiance-semibold.eot');
+    src: url('http://cdn.dota2.com/apps/dota2/fonts/radiance-semibold.eot?#iefix') format('embedded-opentype'),
+         url('http://cdn.dota2.com/apps/dota2/fonts/radiance-semibold.woff') format('woff'),
+         url('http://cdn.dota2.com/apps/dota2/fonts/radiance-semibold.ttf') format('truetype'),
+         url('http://cdn.dota2.com/apps/dota2/fonts/radiance-semibold.svg#ywftsvg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+
+h1 {
+  font-family:'Radiance-Bold', sans-serif;
+  font-size: 7vw;
+  margin-top: 30vh;
+  margin-bottom: 1vh;
+  color: #af3d27;
+}
+
+h3 {
+  font-family:'Radiance-SemiBold', sans-serif;
+  font-size: 2.88vw;
+  margin-top:0vh;
+  color: #336391;
+}
+
+.myButton{
+    background:url("./images/loginButton.png");
+    background-size: 100% 100%;
+    cursor:pointer;
+    border:none;
+    width:171px;
+    height: 65px;
+}
