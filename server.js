@@ -1,22 +1,54 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var app = express();
+var http = require('http');
+app.use(bodyParser.urlencoded());
 
-
+app.use(bodyParser.json());
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
+  res.header('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
   next();
 });
 
 app.post('/nameToID',function(req, res) {
 
-    var returnObj = {};
-    returnObj.userID = 192939;
-    returnObj.userName = 'Doggerdoo';
-    res.end(JSON.stringify(returnObj)); //send just the JSON object
-    console.log(req.body);
-  //  res.send(data);
-    //res.send('http://steamcommunity.com/openid/login?openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.return_to=http%3A%2F%2Flocalhost%3A4200%2Fverify&openid.realm=http%3A%2F%2Flocalhost%3A4200%2F');
+  var returnObj = {};
+  returnObj.userID = findSteamID(req.body.userName);
+  returnObj.userName = req.body.userName;
+  res.end(JSON.stringify(returnObj)); //send just the JSON object
 });
+
+function findSteamID(UserName){
+  var options = {
+    host: 'steamcommunity.com',
+    port: 80,
+    path: '/id/' + UserName
+  };
+  var steamID = 0;
+  var content = "";
+  http.get(options, function(res) {
+    res.on("data", function (chunk) {
+          content += chunk;
+    })
+    res.on("end",function (){
+      var tempArray0 = content.split("steamid\":");
+
+      var tempArray = tempArray0[1].split(",\"personaname");
+      steamID = tempArray[0].replace(/['"]+/g, '');
+      steamID = parseInt(steamID);
+      //console.log("CONTENT:" + content);
+      console.log(UserName , "wants their steam ID! We've sent it back as", steamID);
+      return steamID;
+    })
+
+  }).on('error', function(e) {
+    console.log("Got error: " + e.message);
+    console.log("Error! User may not exist or there is a problem with the connection. Returning error to the client");
+  });
+  console.log(content);
+
+
+}
 app.listen(4200);
-console.log('listenin hbhg');
+console.log('Server started, listening now');

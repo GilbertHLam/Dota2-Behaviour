@@ -11,6 +11,7 @@
     "steam-login": "0.1.6",
     "express": "~4.0.0",
     "express-session": "1.15.6"
+	"body-parser" : "1.18.2"
   },
   "author": "Gilbert Lam",
   "license": "ISC"
