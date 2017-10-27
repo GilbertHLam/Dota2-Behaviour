@@ -2,6 +2,7 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var app = express();
 var http = require('http');
+var strint = require("./strint");
 app.use(bodyParser.urlencoded());
 
 app.use(bodyParser.json());
@@ -19,13 +20,18 @@ app.post('/nameToID',function(req, res) {
   res.end(JSON.stringify(returnObj)); //send just the JSON object
 });
 
+app.post('/findMatches',function(req, res) {
+
+
+});
+
 function findSteamID(UserName){
   var options = {
     host: 'steamcommunity.com',
     port: 80,
     path: '/id/' + UserName
   };
-  var steamID = 0;
+  var steamID = "";
   var content = "";
   http.get(options, function(res) {
     res.on("data", function (chunk) {
@@ -33,11 +39,10 @@ function findSteamID(UserName){
     })
     res.on("end",function (){
       var tempArray0 = content.split("steamid\":");
-
       var tempArray = tempArray0[1].split(",\"personaname");
       steamID = tempArray[0].replace(/['"]+/g, '');
-      steamID = parseInt(steamID);
       //console.log("CONTENT:" + content);
+      steamID = strint.sub(steamID, "76561197960265728");
       console.log(UserName , "wants their steam ID! We've sent it back as", steamID);
       return steamID;
     })
