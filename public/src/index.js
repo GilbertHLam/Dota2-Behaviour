@@ -34,12 +34,26 @@ class NameForm extends React.Component {
   }
 
   handleSubmit(event) {
+
     var requestString = {};
     requestString.userName = this.state.value;
+
     $.post("http://localhost:4200/nameToID", requestString, function(data, status){
-      console.log("data: " + data);
-      console.log("typeof: " + typeof data);
+      console.log(data);
+      getMatches(data);
+
     });
+
+    function getMatches(data){
+      var tempData = JSON.parse(data);
+      var innerRequest = {}
+      innerRequest.userID = tempData.userID;
+      innerRequest.limit = 50;
+      $.post("http://localhost:4200/findRecentMatches", innerRequest, function(response, stat){
+
+      });
+    }
+
     event.preventDefault();
 
   }
