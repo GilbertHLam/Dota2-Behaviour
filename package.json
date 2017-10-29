@@ -8,10 +8,12 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "steam-login": "0.1.6",
+    "body-parser": "1.18.2",
     "express": "~4.0.0",
-    "express-session": "1.15.6"
-	"body-parser" : "1.18.2"
+    "express-session": "1.15.6",
+    "https": "^1.0.0",
+    "steam-login": "0.1.6",
+    "xmlhttprequest": "^1.8.0"
   },
   "author": "Gilbert Lam",
   "license": "ISC"

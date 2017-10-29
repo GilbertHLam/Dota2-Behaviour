@@ -1,8 +1,12 @@
 var express = require('express');
 var bodyParser = require('body-parser');
+var https = require("https");
+
 var app = express();
 var http = require('http');
+var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 var strint = require("./strint");
+
 app.use(bodyParser.urlencoded());
 
 app.use(bodyParser.json());
@@ -51,30 +55,34 @@ app.post('/findRecentMatches',function(req, res) {
   var steamID = req.body.userID;
   var matchIDs = [];
   var options = {
-      host:'api.opendota.com',
-      paths: '/api/players/' + steamID + '/matches?limit=' + numOfGame
+      host: 'api.opendota.com',
+      path: '/api/players/' + steamID + '/matches?limit=' + numOfGame,
+      port: 443,
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
   };
-  console.log(options.host+options.paths);
-  http.get(options, function(res) {
+  console.log(options.host+options.path);
+  var req = https.get(options, function(res) {
     var content = ''
     res.on("data", function (chunk) {
           content += chunk;
-          console.log(chunk);
     })
     res.on("end",function (){
       console.log(content);
         var obj = JSON.parse(content);
         for(var i = 0; i < obj.length; i++){
-          matchIDS.append(obj[i].match_id);
+          matchIDs.push(obj[i].match_id);
           console.log(obj[i].match_id);
         }
     })
 
   }).on('error', function(e) {
     console.log("Got error: " + e.message);
-    console.log("Error! User may not exist or there is a problem with the connection. Returning error to the client");
+    console.log("Error finding matches! User may not exist or there is a problem with the connection. Returning error to the client");
   });
-
+  req.end();
 });
 
 function findSteamID(UserName){
