@@ -48,6 +48,7 @@ class NameForm extends React.Component {
       var tempData = JSON.parse(data);
       var innerRequest = {}
       innerRequest.userID = tempData.userID;
+      innerRequest.userName = requestString.userName;
       innerRequest.limit = 50;
       $.post("http://localhost:4200/findRecentMatches", innerRequest, function(response, stat){
 

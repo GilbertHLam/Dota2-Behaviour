@@ -53,6 +53,7 @@ app.post('/nameToID',function(req, response) {
 app.post('/findRecentMatches',function(req, res) {
   var numOfGame = req.body.limit;
   var steamID = req.body.userID;
+  var steamUser = req.body.userName;
   var matchIDs = [];
   var options = {
       host: 'api.opendota.com',
@@ -70,12 +71,12 @@ app.post('/findRecentMatches',function(req, res) {
           content += chunk;
     })
     res.on("end",function (){
-      console.log(content);
         var obj = JSON.parse(content);
         for(var i = 0; i < obj.length; i++){
           matchIDs.push(obj[i].match_id);
-          console.log(obj[i].match_id);
         }
+        retrieveChatLogs(matchIDs[0], steamUser);
+
     })
 
   }).on('error', function(e) {
@@ -85,10 +86,40 @@ app.post('/findRecentMatches',function(req, res) {
   req.end();
 });
 
-function findSteamID(UserName){
+function retrieveChatLogs(matchID, steamUser){
+  var messages = [];
+  var options = {
+      host: 'api.opendota.com',
+      path: '/api/matches/' + matchID,
+      port: 443,
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+  };
+  console.log(options.host + options.path);
+  var req = https.get(options, function(res) {
+    var content = ''
+    res.on("data", function (chunk) {
+          content += chunk;
+    })
+    res.on("end",function (){
 
+        var obj = JSON.parse(content);
+        var chatLog = obj.chat;
+        for(var i = 0; i < chatLog.length; i++){
+          if(chatLog[i].type === 'chat' && chatLog[i].unit === steamUser){
+            messages.push(chatLog[i].key);
+            console.log(chatLog[i].key)
+          }
+        }
+    })
 
-
+  }).on('error', function(e) {
+    console.log("Got error: " + e.message);
+    console.log("Error finding matches! User may not exist or there is a problem with the connection. Returning error to the client");
+  });
+  req.end();
 }
 app.listen(4200);
 console.log('Server started, listening now');
