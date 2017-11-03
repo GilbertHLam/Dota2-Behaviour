@@ -1,7 +1,6 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var https = require("https");
-
 var app = express();
 var http = require('http');
 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
@@ -64,7 +63,7 @@ app.post('/findRecentMatches',function(req, res) {
         'Content-Type': 'application/json'
       }
   };
-  console.log(options.host+options.path);
+  //console.log(options.host+options.path);
   var req = https.get(options, function(res) {
     var content = ''
     res.on("data", function (chunk) {
@@ -75,7 +74,10 @@ app.post('/findRecentMatches',function(req, res) {
         for(var i = 0; i < obj.length; i++){
           matchIDs.push(obj[i].match_id);
         }
-        retrieveChatLogs(matchIDs[0], steamUser);
+        for(var i = 0; i < matchIDs.length; i++){
+        retrieveChatLogs(matchIDs[i], steamUser);
+      }
+
 
     })
 
@@ -85,6 +87,10 @@ app.post('/findRecentMatches',function(req, res) {
   });
   req.end();
 });
+
+function sentimentAnalysis(arrayOfMessages){
+  
+}
 
 function retrieveChatLogs(matchID, steamUser){
   var messages = [];
@@ -97,7 +103,7 @@ function retrieveChatLogs(matchID, steamUser){
         'Content-Type': 'application/json'
       }
   };
-  console.log(options.host + options.path);
+  //console.log(options.host + options.path);
   var req = https.get(options, function(res) {
     var content = ''
     res.on("data", function (chunk) {
@@ -106,13 +112,17 @@ function retrieveChatLogs(matchID, steamUser){
     res.on("end",function (){
 
         var obj = JSON.parse(content);
+        //console.log(obj.chat);
+        if(obj.chat != null) {
         var chatLog = obj.chat;
+        //console.log(chatLog);
         for(var i = 0; i < chatLog.length; i++){
-          if(chatLog[i].type === 'chat' && chatLog[i].unit === steamUser){
+          if(chatLog[i].type == 'chat' && chatLog[i].unit == steamUser){
             messages.push(chatLog[i].key);
-            console.log(chatLog[i].key)
+            console.log(steamUser + ' said "' + chatLog[i].key + '" in match ' + matchID);
           }
         }
+      }
     })
 
   }).on('error', function(e) {

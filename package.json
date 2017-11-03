@@ -12,6 +12,7 @@
     "express": "~4.0.0",
     "express-session": "1.15.6",
     "https": "^1.0.0",
+    "passport-openidconnect": "0.0.2",
     "steam-login": "0.1.6",
     "xmlhttprequest": "^1.8.0"
   },
