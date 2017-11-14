@@ -5,6 +5,8 @@ var app = express();
 var http = require('http');
 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 var strint = require("./strint");
+var passport = require('passport');
+var SteamStrategy = require('passport-steam').Strategy;
 
 app.use(bodyParser.urlencoded());
 
@@ -15,39 +17,44 @@ app.use(function(req, res, next) {
   next();
 });
 
-app.post('/nameToID',function(req, response) {
+app.use(passport.initialize());
+app.use(passport.session());
 
-  var returnObj = {userID: "", userName: ""};
-  var options = {
-    host: 'steamcommunity.com',
-    port: 80,
-    path: '/id/' + req.body.userName
-  };
-  var steamID = "";
-  var content = "";
-  http.get(options, function(res) {
-    res.on("data", function (chunk) {
-          content += chunk;
+passport.use(new SteamStrategy({
+    returnURL: 'http://localhost:4200/auth/steam/return',
+    realm: 'http://localhost:4200/',
+    apiKey: 'C99EAB7D002F75FC3B0FDB694D2EB73C'
+  },
+  function(identifier, profile, done) {
+    profile.identifier = identifier;
+      //console.log(identifier);
+      //console.log(profile);
+      console.log(profile._json.personaname + " wants their steam ID! We've returned it as " + profile._json.steamid);
+      done(null, profile);
+  }
+));
 
-    })
-    res.on("end",function (){
-      var tempArray0 = content.split("steamid\":");
-      var tempArray = tempArray0[1].split(",\"personaname");
-      steamID = tempArray[0].replace(/['"]+/g, '');
+passport.serializeUser(function(user, done) {
+    done(null, user);
+});
 
-      steamID = strint.sub(steamID, "76561197960265728");
-      console.log(req.body.userName , "wants their steam ID! We've sent it back as", steamID);
-      returnObj.userID = steamID;
-      returnObj.userName = req.body.userName;
-      response.end(JSON.stringify(returnObj)); //send just the JSON object
-    })
+passport.deserializeUser(function(obj, done) {
+    done(null, obj);
+});
 
-  }).on('error', function(e) {
-    console.log("Got error: " + e.message);
-    console.log("Error! User may not exist or there is a problem with the connection. Returning error to the client");
+app.get('/auth/steam',
+  passport.authenticate('steam'),
+  function(req, res) {
+    // The request will be redirected to Steam for authentication, so
+    // this function will not be called.
   });
 
-});
+app.get('/auth/steam/return',
+  passport.authenticate('steam', { failureRedirect: '/auth/steam' }),
+  function(req, res) {
+    // Successful authentication, redirect home.
+    res.redirect('http://localhost:3000/id/'  + '');
+  });
 
 app.post('/findRecentMatches',function(req, res) {
   var numOfGame = req.body.limit;
@@ -89,7 +96,7 @@ app.post('/findRecentMatches',function(req, res) {
 });
 
 function sentimentAnalysis(arrayOfMessages){
-  
+
 }
 
 function retrieveChatLogs(matchID, steamUser){
@@ -113,7 +120,7 @@ function retrieveChatLogs(matchID, steamUser){
 
         var obj = JSON.parse(content);
         //console.log(obj.chat);
-        if(obj.chat != null) {
+        if(obj != null) {
         var chatLog = obj.chat;
         //console.log(chatLog);
         for(var i = 0; i < chatLog.length; i++){

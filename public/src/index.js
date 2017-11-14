@@ -26,23 +26,19 @@ class NameForm extends React.Component {
     this.state = {value: ''};
 
     this.handleChange = this.handleChange.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleClick = this.handleClick.bind(this);
   }
 
   handleChange(event) {
     this.setState({value: event.target.value});
   }
 
-  handleSubmit(event) {
+  handleClick(event) {
 
     var requestString = {};
     requestString.userName = this.state.value;
 
-    $.post("http://localhost:4200/nameToID", requestString, function(data, status){
-      console.log(data);
-      getMatches(data);
-
-    });
+    window.location.href = "http://localhost:4200/auth/steam";
 
     function getMatches(data){
       var tempData = JSON.parse(data);
@@ -61,13 +57,9 @@ class NameForm extends React.Component {
 
   render() {
     return (
-      <form onSubmit={this.handleSubmit}>
-        <label>
-          Username:
-          <input type="text" value={this.state.value} onChange={this.handleChange} />
-        </label>
-        <input type="submit" value="Submit" />
-      </form>
+      <div onClick={this.handleClick}>
+            <button class="myButton"></button>
+      </div>
     );
   }
 }
