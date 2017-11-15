@@ -155,7 +155,7 @@ function retrieveChatLogs(matchIDs, steamID, messageList, currentMatch, listLeng
         var chatLog = obj.chat;
         if(chatLog != null){
           for(var i = 0; i < chatLog.length; i++){
-            if(chatLog[i].type == 'chat' && chatLog[i].unit == nickName){
+            if(chatLog[i].type == 'chat' && chatLog[i].unit == nickName && chatLog[i].key != 'gg'){
               messages.push(chatLog[i].key);
               console.log(nickName + ' said "' + chatLog[i].key + '" in match ' + matchIDs[currentMatch]);
             }
