@@ -45,11 +45,24 @@ h1 {
   color: #af3d27;
 }
 
+h2 {
+  font-family:'Radiance-Bold', sans-serif;
+  font-size: 2vw;
+  color: #af3d27;
+}
+
 h3 {
   font-family:'Radiance-SemiBold', sans-serif;
   font-size: 2.88vw;
   margin-top:0vh;
   color: #336391;
+}
+
+#positivityScore {
+  text-align: center;
+  width: 33%;
+  height: 50%;
+  background-color: #336391;
 }
 
 .myButton{

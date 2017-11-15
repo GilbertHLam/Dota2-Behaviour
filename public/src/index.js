@@ -4,19 +4,41 @@ import * as $ from 'jquery';
 import './index.css';
 
 class Home extends React.Component {
+  getScores(){
+    var innerRequest = {}
+    innerRequest.userID = window.location.href.substring(window.location.href.indexOf('id/')+3);
+    innerRequest.limit = 100;
+    $.post("http://localhost:4200/findRecentMatches", innerRequest, function(response, stat){
+
+    });
+    return(
+<div>Function called</div>
+);
+  }
   render(){
-    return (
-      <div style={{textAlign:'center'}}>
-      <h1>
+    var currentUrl = window.location.href;
+    if(!currentUrl.includes('id')){
+      return (
+        <div style={{textAlign:'center'}}>
+        <h1>
         DOTA 2 BEHAVIOUR
-      </h1>
-      <h3 className="small">
+        </h1>
+        <h3 className="small">
         ANALYZE YOUR GAME BEHAVIOUR
-      </h3>
-      <div id='userForm'>
-      </div>
-    </div>
-    )
+        </h3>
+        <div id='userForm'>
+        </div>
+        </div>
+      );
+    }
+
+    else {
+      return (
+        <div id="positivityScore">
+          <h2>Overall Positivity: {this.getScores()}</h2>
+        </div>
+      );
+    }
   }
 }
 
@@ -40,30 +62,30 @@ class NameForm extends React.Component {
 
     window.location.href = "http://localhost:4200/auth/steam";
 
-    function getMatches(data){
-      var tempData = JSON.parse(data);
-      var innerRequest = {}
-      innerRequest.userID = tempData.userID;
-      innerRequest.userName = requestString.userName;
-      innerRequest.limit = 50;
-      $.post("http://localhost:4200/findRecentMatches", innerRequest, function(response, stat){
-
-      });
-    }
-
     event.preventDefault();
 
   }
 
   render() {
-    return (
-      <div onClick={this.handleClick}>
-            <button class="myButton"></button>
-      </div>
-    );
+    var currentUrl = window.location.href;
+    if(!currentUrl.includes('id')){
+      return (
+        <div onClick={this.handleClick}>
+        <button class="myButton"></button>
+        </div>
+      );
+    }
+    else {
+      return(
+        <div>
+        </div>
+      );
+    }
   }
 }
 
-ReactDOM.render(<Home />, document.getElementById("root"));
 
+
+
+ReactDOM.render(<Home />, document.getElementById("root"));
 ReactDOM.render(<NameForm />, document.getElementById("userForm"));
