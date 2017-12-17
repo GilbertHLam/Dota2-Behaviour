@@ -62,7 +62,7 @@ function(req, res) {
   res.redirect('http://localhost:3000/id/'  + steamID);
 });
 
-app.post('/findRecentMatches',function(req, res) {
+app.post('/findRecentMatches',function(req, specRes) {
   var asyncTasks = [];
 
   var numOfGame = req.body.limit;
@@ -71,6 +71,7 @@ app.post('/findRecentMatches',function(req, res) {
   var nickName;
   var matchIDs = [];
   var messages = [];
+  var counter = 0;
   var options = {
     host: 'api.opendota.com',
     path: '/api/players/' + steamID + '/matches?limit=' + numOfGame,
@@ -92,14 +93,15 @@ app.post('/findRecentMatches',function(req, res) {
         matchIDs.push(obj[i].match_id);
       }
       var listLength = matchIDs.length;
-    //  for(var i = 0; i < listLength; i++){
-        retrieveChatLogs(matchIDs, steamID, messages, 0, listLength);
-
-  //    }
-
-      //setTimeout(function(){console.log(messages);sentimentAnalysis(messages);}, 10000);
-
-
+      for(var i = 0; i < matchIDs.length; i++){
+      retrieveChatLogs(matchIDs[i], steamID, messages, specRes, function(err, response, specRes) {
+        counter = counter + response;
+        //console.log(counter);
+        if(counter == matchIDs.length){
+          return sentimentAnalysis(messages, specRes);
+        }
+      });
+    }
 
   }).on('error', function(e) {
     console.log("Got error: " + e.message);
@@ -108,28 +110,53 @@ app.post('/findRecentMatches',function(req, res) {
   req.end();
 });
 });
-function addMessages(messages, i ,steamID){
 
-    //callback();
-}
-
-var response = function(res) {
-  console.log("YOUR SCORE IS " + res);
-}
 var logError = function(err) { console.log(err); }
 
-function sentimentAnalysis(arrayOfMessages){
+function sentimentAnalysis(arrayOfMessages, res){
+  //console.log(res);
+  var returnObj = {};
   indico.sentiment(arrayOfMessages)
-  .then(response)
+  .then(function(response){
+    var mostPositive;
+    var mostPosIndex = 0;
+    var mostNegIndex = 0;
+    var mostNegative;
+    var averageScore = 0;
+    mostPositive = response[0];
+    mostNegative = response[0];
+    for(var i = 0; i < response.length;i++){
+      if(mostPositive < response[i]) {
+        mostPositive = response[i];
+        mostPosIndex = i;
+      }
+      if(mostNegative >response[i]) {
+        mostNegative = response[i];
+        mostNegIndex = i;
+      }
+      averageScore += response[i];
+    }
+    averageScore = averageScore*100/response.length;
+    console.log("Most Negative: '" + arrayOfMessages[mostNegIndex] + "' with a score of " + mostNegative*100 +"%");
+    console.log("Most Positive: '" + arrayOfMessages[mostPosIndex] + "' with a score of " + mostPositive*100 +"%");
+    console.log("Average Score: " + averageScore);
+    returnObj.mostNeg = arrayOfMessages[mostNegIndex];
+    returnObj.mostNegScore = mostNegative*100;
+    returnObj.mostPos = arrayOfMessages[mostPosIndex];
+    returnObj.mostPosScore = mostPositive*100;
+    returnObj.averageScore = averageScore;
+    return res.end(JSON.stringify(returnObj));
+
+  })
   .catch(logError);
 }
 
-function retrieveChatLogs(matchIDs, steamID, messageList, currentMatch, listLength){
+function retrieveChatLogs(matchID, steamID, messages, specialRes, callback){
   var nickName;
-  var messages = [];
+  var err;
   var options = {
     host: 'api.opendota.com',
-    path: '/api/matches/' + matchIDs[currentMatch],
+    path: '/api/matches/' + matchID,
     port: 443,
     method: 'GET',
     headers: {
@@ -140,10 +167,15 @@ function retrieveChatLogs(matchIDs, steamID, messageList, currentMatch, listLeng
   var req = https.get(options, function(res) {
     var content = ''
     res.on("data", function (chunk) {
+      try{
       content += chunk;
-    })
+    }catch(err){
+      console.log(err);
+    }
+    });
     res.on("end",function (){
-      console.log("Looking at match " + matchIDs[currentMatch] + " for user " + steamID);
+      console.log("Looking at match " + matchID + " for user " + steamID);
+      try {
       var obj = JSON.parse(content);
       if(obj.players != null) {
         var tempArray = obj.players;
@@ -155,37 +187,27 @@ function retrieveChatLogs(matchIDs, steamID, messageList, currentMatch, listLeng
         var chatLog = obj.chat;
         if(chatLog != null){
           for(var i = 0; i < chatLog.length; i++){
-            if(chatLog[i].type == 'chat' && chatLog[i].unit == nickName && chatLog[i].key != 'gg'){
+            if(chatLog[i].type == 'chat' && chatLog[i].unit == nickName && !(chatLog[i].key == 'gg' || chatLog[i].key =='GG' || chatLog[i].key =='Gg')){
               messages.push(chatLog[i].key);
-              console.log(nickName + ' said "' + chatLog[i].key + '" in match ' + matchIDs[currentMatch]);
+              console.log(nickName + ' said "' + chatLog[i].key + '" in match ' + matchID);
             }
           }
-
-
-          if(currentMatch == listLength - 1){
-            console.log("------------------------------");
-            console.log(messageList);
-            return sentimentAnalysis(messageList);
-          }
-          else {
-            messageList = addToList(messages, messageList);
-            currentMatch++;
-            return retrieveChatLogs(matchIDs, steamID,messageList,currentMatch,listLength);
-          }
+          callback(err, 1, specialRes);
         }
+        else {
+        callback(err, 1, specialRes);
       }
-    //  else {
-        currentMatch++;
-        return retrieveChatLogs(matchIDs, steamID,messageList,currentMatch,listLength);
-    //  }
-    })
-
+      }
+    }catch(err){
+      console.log(err);
+    }
   }).on('error', function(e) {
     console.log("Got error: " + e.message);
     console.log("Error finding matches! User may not exist or there is a problem with the connection. Returning error to the client");
   });
-  req.end();
+});
 }
+
 
 function addToList(messages, messageList){
   return messageList.concat(messages);
