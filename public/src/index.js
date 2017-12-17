@@ -8,10 +8,10 @@ class Home extends React.Component {
     var innerRequest = {}
     innerRequest.userID = window.location.href.substring(window.location.href.indexOf('id/')+3);
     innerRequest.limit = 20;
-    //$.post("http://localhost:4200/findRecentMatches", innerRequest, function(response, stat){
+    $.post("http://localhost:4200/findRecentMatches", innerRequest, function(response, stat){
       //console.log(response);
-      //D
-    //});
+      $('#positivityScore').css('visibility','visible');
+    });
     return(
       <div>
       <div id="positivityScore" style={{visibility:'hidden'}}>
