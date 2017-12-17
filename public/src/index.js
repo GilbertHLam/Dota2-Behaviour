@@ -7,23 +7,28 @@ class Home extends React.Component {
   getScores(){
     var innerRequest = {}
     innerRequest.userID = window.location.href.substring(window.location.href.indexOf('id/')+3);
-    innerRequest.limit = 20;
+    innerRequest.limit = 1;
     $.post("http://localhost:4200/findRecentMatches", innerRequest, function(response, stat){
-      //console.log(response);
-      $('#positivityScore').css('visibility','visible');
+      console.log(response);
+      response = JSON.parse(response);
+      $('#positivityScore').animate({width:"50%"},1000);
+      $('#negativityScore').animate({width:"50%"},1000);
+      $('#positivity').html("<h2 style='color:#9c4345'>Most Positive Message</h1><h2 class='sentence'>"+response.mostPos+"</h2></div>").hide().fadeIn(2000);
+      $('#negativity').html("<h2 style='color:#137c39'>Most Negative Message</h1><h2 class='sentence'>"+response.mostNeg+"</h2></div>").hide().fadeIn(2000);
+      $('#loading').css('visibility','hidden');
     });
     return(
       <div>
-      <div id="positivityScore" style={{visibility:'hidden'}}>
-        <h2></h2>
-      </div>
-      <div style={{textAlign:'center'}}>
-      <h1>
-      LOADING ...
-      </h1>
+      <div id="positivityScore" style={{width:'0%'}}>
+      <div id="positivity">
       </div>
       </div>
-);
+      <div id="negativityScore" style={{width:'0%'}}>
+      <div id="negativity">
+      </div>
+      </div>
+      </div>
+    );
   }
   render(){
     var currentUrl = window.location.href;

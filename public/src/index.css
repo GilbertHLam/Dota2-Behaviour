@@ -1,6 +1,7 @@
 /* You can add global styles to this file, and also import other style files */
 body {
   background-color: #242f39;
+  padding: 0;
   background-image: url("images/background.jpg");
 }
 @font-face {
@@ -60,9 +61,18 @@ h3 {
 
 #positivityScore {
   text-align: center;
-  width: 33%;
-  height: 50%;
-  background-color: #336391;
+  width: 50%;
+  height: 100%;
+  float: left;
+  background-color: #137c39;
+}
+
+#negativityScore {
+  text-align: center;
+  width: 50%;
+  height: 100%;
+  float: right;
+  background-color: #9c4345;
 }
 
 .myButton{
@@ -72,4 +82,8 @@ h3 {
     border:0px;
     width:171px;
     height: 65px;
+}
+
+.sentence {
+  color: #000000;
 }
