@@ -10,6 +10,7 @@ class Home extends React.Component {
     innerRequest.limit = 20;
     //$.post("http://localhost:4200/findRecentMatches", innerRequest, function(response, stat){
       //console.log(response);
+      //D
     //});
     return(
       <div>
