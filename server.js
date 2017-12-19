@@ -1,3 +1,4 @@
+require('dotenv').config();
 var express = require('express');
 var bodyParser = require('body-parser');
 var https = require("https");
@@ -6,11 +7,12 @@ var http = require('http');
 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 var strint = require("./strint");
 var passport = require('passport');
-var indico = require('indico.io');
+
+
 var async = require('async');
 var SteamStrategy = require('passport-steam').Strategy;
 var steamID;
-indico.apiKey =  'f759097f01407bd1302f6caad8cf62d0'
+
 app.use(bodyParser.urlencoded());
 
 app.use(bodyParser.json());
@@ -26,7 +28,7 @@ app.use(passport.session());
 passport.use(new SteamStrategy({
   returnURL: 'http://localhost:4200/auth/steam/return',
   realm: 'http://localhost:4200/',
-  apiKey: 'C99EAB7D002F75FC3B0FDB694D2EB73C'
+  apiKey: process.env.STEAM_KEY
 },
 function(identifier, profile, done) {
   profile.identifier = identifier;
@@ -94,61 +96,105 @@ app.post('/findRecentMatches',function(req, specRes) {
       }
       var listLength = matchIDs.length;
       for(var i = 0; i < matchIDs.length; i++){
-      retrieveChatLogs(matchIDs[i], steamID, messages, specRes, function(err, response, specRes) {
-        counter = counter + response;
-        //console.log(counter);
-        if(counter == matchIDs.length){
-          return sentimentAnalysis(messages, specRes);
-        }
-      });
-    }
+    //    sleep(0.1);
+        retrieveChatLogs(matchIDs[i], steamID, messages, specRes, function(err, response, specRes) {
+          if(err){
+            console.log("RIP");
+          }
+          counter = counter + response;
+          //console.log(counter);
+          if(counter == matchIDs.length){
+            return sentimentAnalysis(messages, specRes);
+          }
+        });
+      }
 
-  }).on('error', function(e) {
-    console.log("Got error: " + e.message);
-    console.log("Error finding matches! User may not exist or there is a problem with the connection. Returning error to the client");
+    }).on('error', function(e) {
+      console.log("Got error: " + e.message);
+      console.log("Error finding matches! User may not exist or there is a problem with the connection. Returning error to the client");
+    });
+    req.end();
   });
-  req.end();
-});
 });
 
 var logError = function(err) { console.log(err); }
 
 function sentimentAnalysis(arrayOfMessages, res){
   //console.log(res);
+//console.log(process.env.GOOGLE_APPLICATION_CREDENTIALS);
   var returnObj = {};
-  indico.sentiment(arrayOfMessages)
-  .then(function(response){
-    var mostPositive;
-    var mostPosIndex = 0;
-    var mostNegIndex = 0;
-    var mostNegative;
-    var averageScore = 0;
-    mostPositive = response[0];
-    mostNegative = response[0];
-    for(var i = 0; i < response.length;i++){
-      if(mostPositive < response[i]) {
-        mostPositive = response[i];
-        mostPosIndex = i;
+  var content = {
+    "document": {
+      "type": "PLAIN_TEXT",
+      "language": "en",
+      "content": arrayOfMessages.join('. '),
+    },
+    encodingType: "UTF16",
+  };
+  var options = {
+    method: 'POST',
+    host: 'language.googleapis.com',
+    port: 443,
+    body: content,
+    headers: {
+    'Content-Type': 'application/json',
+    },
+    path: '/v1/documents:analyzeSentiment?key=' + process.env.GOOGLE_APPLICATION_CREDENTIALS,
+  };
+  var req = https.request(options, function(response) {
+    var tempString = '';
+    response.on('data', function(chunk) {
+      //console.log(chunk);
+      tempString += chunk;
+    }).on("end", function(){
+      var obj = JSON.parse(tempString);
+    //  console.log(obj);
+    //  console.log(arrayOfMessages.join(' . '));
+      var tempMess = [];
+      var tempScore = [];
+      for(var p = 0; p < obj.sentences.length; p ++) {
+        tempMess[p] = obj.sentences[p].text.content ;
+        tempScore[p] = obj.sentences[p].sentiment.score;//+obj.sentences[p].sentiment.magnitude;
       }
-      if(mostNegative >response[i]) {
-        mostNegative = response[i];
-        mostNegIndex = i;
-      }
-      averageScore += response[i];
+      var mostPositive;
+      var mostPosIndex = 0;
+      var mostNegIndex = 0;
+      var mostNegative;
+      var averageScore = 0;
+      mostPositive = tempScore[0];
+      mostNegative = tempScore[0];
+      for(var i = 0; i < tempScore.length;i++){
+      if(mostPositive < tempScore[i]) {
+      mostPositive = tempScore[i];
+      mostPosIndex = i;
     }
-    averageScore = averageScore*100/response.length;
-    console.log("Most Negative: '" + arrayOfMessages[mostNegIndex] + "' with a score of " + mostNegative*100 +"%");
-    console.log("Most Positive: '" + arrayOfMessages[mostPosIndex] + "' with a score of " + mostPositive*100 +"%");
+    if(mostNegative > tempScore[i]) {
+    mostNegative = tempScore[i];
+    mostNegIndex = i;
+    }
+    averageScore += tempScore[i];
+    }
+    averageScore = averageScore*100/tempScore.length;
+    console.log("Most Negative: '" + tempMess[mostNegIndex] + "' with a score of " + mostNegative*100 +"%");
+    console.log("Most Positive: '" + tempMess[mostPosIndex] + "' with a score of " + mostPositive*100 +"%");
     console.log("Average Score: " + averageScore);
-    returnObj.mostNeg = arrayOfMessages[mostNegIndex];
+    returnObj.mostNeg = tempMess[mostNegIndex];
     returnObj.mostNegScore = mostNegative*100;
-    returnObj.mostPos = arrayOfMessages[mostPosIndex];
+    returnObj.mostPos = tempMess[mostPosIndex];
     returnObj.mostPosScore = mostPositive*100;
     returnObj.averageScore = averageScore;
     return res.end(JSON.stringify(returnObj));
+    });
 
-  })
-  .catch(logError);
+  }).on('error', function(e){
+    console.log("error:", e);
+  });
+  req.write(JSON.stringify(content));
+  req.end();
+  /**
+
+**/
+
 }
 
 function retrieveChatLogs(matchID, steamID, messages, specialRes, callback){
@@ -168,44 +214,44 @@ function retrieveChatLogs(matchID, steamID, messages, specialRes, callback){
     var content = ''
     res.on("data", function (chunk) {
       try{
-      content += chunk;
-    }catch(err){
-      console.log(err);
-    }
+        content += chunk;
+      }catch(err){
+        console.log(err);
+      }
     });
     res.on("end",function (){
-      console.log("Looking at match " + matchID + " for user " + steamID);
+      //console.log("Looking at match " + matchID + " for user " + steamID);
       try {
-      var obj = JSON.parse(content);
-      if(obj.players != null) {
-        var tempArray = obj.players;
-        for(var i = 0; i < 10; i++){
-          if(tempArray[i].account_id == steamID)
-          nickName = tempArray[i].personaname;
-        }
-
-        var chatLog = obj.chat;
-        if(chatLog != null){
-          for(var i = 0; i < chatLog.length; i++){
-            if(chatLog[i].type == 'chat' && chatLog[i].unit == nickName && !(chatLog[i].key == 'gg' || chatLog[i].key =='GG' || chatLog[i].key =='Gg')){
-              messages.push(chatLog[i].key);
-              console.log(nickName + ' said "' + chatLog[i].key + '" in match ' + matchID);
-            }
+        var obj = JSON.parse(content);
+        if(obj.players != null) {
+          var tempArray = obj.players;
+          for(var i = 0; i < 10; i++){
+            if(tempArray[i].account_id == steamID)
+            nickName = tempArray[i].personaname;
           }
-          callback(err, 1, specialRes);
+
+          var chatLog = obj.chat;
+          if(chatLog != null){
+            for(var i = 0; i < chatLog.length; i++){
+              if(chatLog[i].type == 'chat' && chatLog[i].unit == nickName && !(chatLog[i].key == 'gg' || chatLog[i].key =='GG' || chatLog[i].key =='Gg')){
+                messages.push(chatLog[i].key);
+                console.log(nickName + ' said "' + chatLog[i].key + '" in match ' + matchID);
+              }
+            }
+            callback(err, 1, specialRes);
+          }
+          else {
+            callback(err, 1, specialRes);
+          }
         }
-        else {
+      }catch(err){
         callback(err, 1, specialRes);
       }
-      }
-    }catch(err){
-      console.log(err);
-    }
-  }).on('error', function(e) {
-    console.log("Got error: " + e.message);
-    console.log("Error finding matches! User may not exist or there is a problem with the connection. Returning error to the client");
+    }).on('error', function(e) {
+      console.log("Got error: " + e.message);
+      console.log("Error finding matches! User may not exist or there is a problem with the connection. Returning error to the client");
+    });
   });
-});
 }
 
 

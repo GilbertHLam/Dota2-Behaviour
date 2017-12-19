@@ -1,34 +1,34 @@
-import React from 'react';
+import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import * as $ from 'jquery';
 import './index.css';
 
-class Home extends React.Component {
+class Results extends Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      isLoading: true,
+      worst: 'LOADING..',
+      best: ' ',
+    };
+    if(window.location.href.includes('id')){
+      this.getScores = this.getScores.bind(this);
+      this.getScores();
+    }
+
+  }
   getScores(){
     var innerRequest = {}
     innerRequest.userID = window.location.href.substring(window.location.href.indexOf('id/')+3);
-    innerRequest.limit = 1;
-    $.post("http://localhost:4200/findRecentMatches", innerRequest, function(response, stat){
+    innerRequest.limit = 30;
+    var requestFunc = function(response, stat){
       console.log(response);
       response = JSON.parse(response);
-      $('#positivityScore').animate({width:"50%"},1000);
-      $('#negativityScore').animate({width:"50%"},1000);
-      $('#positivity').html("<h2 style='color:#9c4345'>Most Positive Message</h1><h2 class='sentence'>"+response.mostPos+"</h2></div>").hide().fadeIn(2000);
-      $('#negativity').html("<h2 style='color:#137c39'>Most Negative Message</h1><h2 class='sentence'>"+response.mostNeg+"</h2></div>").hide().fadeIn(2000);
-      $('#loading').css('visibility','hidden');
-    });
-    return(
-      <div>
-      <div id="positivityScore" style={{width:'0%'}}>
-      <div id="positivity">
-      </div>
-      </div>
-      <div id="negativityScore" style={{width:'0%'}}>
-      <div id="negativity">
-      </div>
-      </div>
-      </div>
-    );
+      this.setState({worst :response.mostNeg, best: response.mostPos, isLoading:false});
+    }
+    requestFunc = requestFunc.bind(this);
+    $.post("http://localhost:4200/findRecentMatches", innerRequest, requestFunc);
   }
   render(){
     var currentUrl = window.location.href;
@@ -49,7 +49,14 @@ class Home extends React.Component {
 
     else {
       return (
-        this.getScores()
+        <div>
+        <div id="negativityScore">
+        <h1>{this.state.worst}</h1>
+        </div>
+        <div id="positivityScore">
+        <h1>{this.state.best}</h1>
+        </div>
+        </div>
       );
     }
   }
@@ -100,5 +107,5 @@ class NameForm extends React.Component {
 
 
 
-ReactDOM.render(<Home />, document.getElementById("root"));
+ReactDOM.render(<Results />, document.getElementById("root"));
 ReactDOM.render(<NameForm />, document.getElementById("userForm"));
