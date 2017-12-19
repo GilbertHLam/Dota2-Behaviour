@@ -96,17 +96,16 @@ app.post('/findRecentMatches',function(req, specRes) {
       }
       var listLength = matchIDs.length;
       for(var i = 0; i < matchIDs.length; i++){
-    //    sleep(0.1);
-        retrieveChatLogs(matchIDs[i], steamID, messages, specRes, function(err, response, specRes) {
-          if(err){
-            console.log("RIP");
-          }
-          counter = counter + response;
-          //console.log(counter);
-          if(counter == matchIDs.length){
-            return sentimentAnalysis(messages, specRes);
-          }
-        });
+          retrieveChatLogs(matchIDs[i], steamID, messages, specRes, function(err, response, specRes) {
+            if(err){
+              console.log(err);
+            }
+            counter = counter + 1;
+            console.log('Done ' + counter + ' out of ' + matchIDs.length);
+            if(counter == matchIDs.length){
+              return sentimentAnalysis(messages, specRes);
+            }
+          });
       }
 
     }).on('error', function(e) {
@@ -121,7 +120,7 @@ var logError = function(err) { console.log(err); }
 
 function sentimentAnalysis(arrayOfMessages, res){
   //console.log(res);
-//console.log(process.env.GOOGLE_APPLICATION_CREDENTIALS);
+  //console.log(process.env.GOOGLE_APPLICATION_CREDENTIALS);
   var returnObj = {};
   var content = {
     "document": {
@@ -137,7 +136,7 @@ function sentimentAnalysis(arrayOfMessages, res){
     port: 443,
     body: content,
     headers: {
-    'Content-Type': 'application/json',
+      'Content-Type': 'application/json',
     },
     path: '/v1/documents:analyzeSentiment?key=' + process.env.GOOGLE_APPLICATION_CREDENTIALS,
   };
@@ -148,13 +147,13 @@ function sentimentAnalysis(arrayOfMessages, res){
       tempString += chunk;
     }).on("end", function(){
       var obj = JSON.parse(tempString);
-    //  console.log(obj);
-    //  console.log(arrayOfMessages.join(' . '));
+      //  console.log(obj);
+      //  console.log(arrayOfMessages.join(' . '));
       var tempMess = [];
       var tempScore = [];
       for(var p = 0; p < obj.sentences.length; p ++) {
         tempMess[p] = obj.sentences[p].text.content ;
-        tempScore[p] = obj.sentences[p].sentiment.score;//+obj.sentences[p].sentiment.magnitude;
+        tempScore[p] = obj.sentences[p].sentiment.score+(obj.sentences[p].sentiment.magnitude/2);
       }
       var mostPositive;
       var mostPosIndex = 0;
@@ -164,26 +163,26 @@ function sentimentAnalysis(arrayOfMessages, res){
       mostPositive = tempScore[0];
       mostNegative = tempScore[0];
       for(var i = 0; i < tempScore.length;i++){
-      if(mostPositive < tempScore[i]) {
-      mostPositive = tempScore[i];
-      mostPosIndex = i;
-    }
-    if(mostNegative > tempScore[i]) {
-    mostNegative = tempScore[i];
-    mostNegIndex = i;
-    }
-    averageScore += tempScore[i];
-    }
-    averageScore = averageScore*100/tempScore.length;
-    console.log("Most Negative: '" + tempMess[mostNegIndex] + "' with a score of " + mostNegative*100 +"%");
-    console.log("Most Positive: '" + tempMess[mostPosIndex] + "' with a score of " + mostPositive*100 +"%");
-    console.log("Average Score: " + averageScore);
-    returnObj.mostNeg = tempMess[mostNegIndex];
-    returnObj.mostNegScore = mostNegative*100;
-    returnObj.mostPos = tempMess[mostPosIndex];
-    returnObj.mostPosScore = mostPositive*100;
-    returnObj.averageScore = averageScore;
-    return res.end(JSON.stringify(returnObj));
+        if(mostPositive < tempScore[i]) {
+          mostPositive = tempScore[i];
+          mostPosIndex = i;
+        }
+        if(mostNegative > tempScore[i]) {
+          mostNegative = tempScore[i];
+          mostNegIndex = i;
+        }
+        averageScore += tempScore[i];
+      }
+      averageScore = averageScore*100/tempScore.length;
+      console.log("Most Negative: '" + tempMess[mostNegIndex] + "' with a score of " + mostNegative );
+      console.log("Most Positive: '" + tempMess[mostPosIndex] + "' with a score of " + mostPositive);
+      console.log("Average Score: " + averageScore);
+      returnObj.mostNeg = tempMess[mostNegIndex];
+      returnObj.mostNegScore = mostNegative*100;
+      returnObj.mostPos = tempMess[mostPosIndex];
+      returnObj.mostPosScore = mostPositive*100;
+      returnObj.averageScore = averageScore;
+      return res.end(JSON.stringify(returnObj));
     });
 
   }).on('error', function(e){
@@ -193,7 +192,7 @@ function sentimentAnalysis(arrayOfMessages, res){
   req.end();
   /**
 
-**/
+  **/
 
 }
 
@@ -238,14 +237,14 @@ function retrieveChatLogs(matchID, steamID, messages, specialRes, callback){
                 console.log(nickName + ' said "' + chatLog[i].key + '" in match ' + matchID);
               }
             }
-            callback(err, 1, specialRes);
+            callback(err, matchID, specialRes);
           }
           else {
-            callback(err, 1, specialRes);
+            callback(err, matchID, specialRes);
           }
         }
       }catch(err){
-        callback(err, 1, specialRes);
+        callback(err, matchID, specialRes);
       }
     }).on('error', function(e) {
       console.log("Got error: " + e.message);
