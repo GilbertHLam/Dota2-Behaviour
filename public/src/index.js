@@ -18,15 +18,23 @@ class Results extends Component {
       this.getScores = this.getScores.bind(this);
       this.getScores();
     }
+    this.nextPage = this.nextPage.bind(this);
+    this.lastPage = this.lastPage.bind(this);
+  }
+  nextPage(){
+    this.setState({page:this.state.page+1});
+  }
+  lastPage(){
+    this.setState({page:this.state.page-1});
   }
   getScores(){
     var innerRequest = {}
     innerRequest.userID = window.location.href.substring(window.location.href.indexOf('id/')+3);
-    innerRequest.limit = 150;
+    innerRequest.limit = 10;
     var requestFunc = function(response, stat){
       console.log(response);
       response = JSON.parse(response);
-      this.setState({worst :response.mostNeg, best: response.mostPos, currentPage: 1, isLoading:false});
+      this.setState({worst :response.mostNeg, best: response.mostPos, page: 0, isLoading:false});
     }
     setInterval(function() {
       if(this.state.counter < 5)
@@ -34,7 +42,7 @@ class Results extends Component {
         else if(this.state.counter > 4 && this.state.isLoading) {
           window.location.reload();
         }
-    }.bind(this), 5000);
+    }.bind(this), 8000);
     requestFunc = requestFunc.bind(this);
     $.post("http://localhost:4200/findRecentMatches", innerRequest, requestFunc);
   }
@@ -43,7 +51,7 @@ class Results extends Component {
     var currentUrl = window.location.href;
     if(!currentUrl.includes('id')){
       return (
-        <div style={{textAlign:'center'}}>
+        <div class='center'style={{textAlign:'center'}}>
         <h1>
         DOTA 2 BEHAVIOUR
         </h1>
@@ -57,9 +65,8 @@ class Results extends Component {
     }
 
     else {
-      return (
-        <div>
-        { this.state.isLoading ? (
+      if(this.state.isLoading){
+        return (
           <div class='center'>
           <div class="preloader-wrapper big active">
           <div class="spinner-layer spinner-blue-only">
@@ -74,21 +81,36 @@ class Results extends Component {
           </div>
           <h2>{loadMessages[this.state.counter]}</h2>
           </div>
-
-        ) : (
-          <div class='fade-in' style={{visibility:'visible', opacity:'1'}}>
-          <div id="positivityScore" >
-          <h1>{this.state.best}</h1>
-          </div>
-          <div id="negativityScore" >
-          <h1>{this.state.worst}</h1>
-          </div>
-
-          </div>
-
-        )}
+        );
+      }
+      else if(this.state.page == 0){
+        return (
+        <div>
+        <i class="arrow-right" onClick={this.nextPage}></i>
+        <div class='center' style={{visibility:'visible', opacity:'1'}}>
+        <h1 style={{fontSize:'6vw',color:'#137c39'}}>&#10077;</h1>
+        <h1 style={{color:'#137c39'}}>{this.state.best}</h1>
+        <h1 style={{fontSize:'6vw',color:'#137c39'}}>&#10080;</h1>
+        <h2> - Doggerdoo (2017)</h2>
+        </div>
         </div>
       );
+      }
+      else if(this.state.page == 1){
+        return (
+        <div>
+        <i class="arrow-left" onClick={this.lastPage}></i>
+        <i class="arrow-right" onClick={this.nextPage}></i>
+
+        <div class='center' style={{visibility:'visible', opacity:'1'}}>
+        <h1 style={{fontSize:'6vw',color:'#137c39'}}>&#10077;</h1>
+        <h1 style={{color:'#137c39'}}>{this.state.worst}</h1>
+        <h1 style={{fontSize:'6vw',color:'#137c39'}}>&#10080;</h1>
+        <h2> - Doggerdoo (2017)</h2>
+        </div>
+        </div>
+      );
+      }
     }
   }
 }

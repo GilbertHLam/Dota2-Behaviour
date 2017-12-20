@@ -250,6 +250,10 @@ function retrieveChatLogs(matchID, steamID, messages, specialRes, callback){
       console.log("Got error: " + e.message);
       console.log("Error finding matches! User may not exist or there is a problem with the connection. Returning error to the client");
     });
+    res.on('error', function(e) {
+      console.log("Got error: " + e.message);
+      console.log("Error finding matches! User may not exist or there is a problem with the connection. Returning error to the client");
+    });
   });
 }
 
