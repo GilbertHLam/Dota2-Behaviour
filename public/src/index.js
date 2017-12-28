@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import ReactDOM from 'react-dom';
 import * as $ from 'jquery';
 import './index.css';
@@ -30,7 +31,7 @@ class Results extends Component {
   getScores(){
     var innerRequest = {}
     innerRequest.userID = window.location.href.substring(window.location.href.indexOf('id/')+3);
-    innerRequest.limit = 10;
+    innerRequest.limit = 150;
     var requestFunc = function(response, stat){
       console.log(response);
       response = JSON.parse(response);
@@ -46,8 +47,29 @@ class Results extends Component {
     requestFunc = requestFunc.bind(this);
     $.post("http://localhost:4200/findRecentMatches", innerRequest, requestFunc);
   }
-  render(){
+
+  renderLoading(){
     var loadMessages = ['Finding your matches....', 'Reading chat logs...', 'Analyzing sentiment...', 'You\'ve said some pretty interesting things...', '....this is taking pretty long...try refreshing!','Here....I\'ll refresh it for you!'];
+    return (
+      <div class='center'>
+      <div class="preloader-wrapper big active">
+      <div class="spinner-layer spinner-blue-only">
+      <div class="circle-clipper left">
+      <div class="circle"></div>
+      </div><div class="gap-patch">
+      <div class="circle"></div>
+      </div><div class="circle-clipper right">
+      <div class="circle"></div>
+      </div>
+      </div>
+      </div>
+      <h2>{loadMessages[this.state.counter]}</h2>
+      </div>
+    );
+  }
+
+  render(){
+
     var currentUrl = window.location.href;
     if(!currentUrl.includes('id')){
       return (
@@ -67,20 +89,9 @@ class Results extends Component {
     else {
       if(this.state.isLoading){
         return (
-          <div class='center'>
-          <div class="preloader-wrapper big active">
-          <div class="spinner-layer spinner-blue-only">
-          <div class="circle-clipper left">
-          <div class="circle"></div>
-          </div><div class="gap-patch">
-          <div class="circle"></div>
-          </div><div class="circle-clipper right">
-          <div class="circle"></div>
-          </div>
-          </div>
-          </div>
-          <h2>{loadMessages[this.state.counter]}</h2>
-          </div>
+          <ReactCSSTransitionGroup transitionName="example">
+          {this.renderLoading()}
+          </ReactCSSTransitionGroup>
         );
       }
       else if(this.state.page == 0){

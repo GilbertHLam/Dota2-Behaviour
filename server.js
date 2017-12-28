@@ -262,4 +262,5 @@ function addToList(messages, messageList){
   return messageList.concat(messages);
 }
 app.listen(4200);
+app
 console.log('Server started, listening now');
