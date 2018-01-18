@@ -21,6 +21,7 @@
     "passport-openidconnect": "0.0.2",
     "passport-steam": "^1.0.8",
     "steam-login": "0.1.6",
+    "valvelet": "^1.1.1",
     "xmlhttprequest": "^1.8.0"
   },
   "author": "Gilbert Lam",
