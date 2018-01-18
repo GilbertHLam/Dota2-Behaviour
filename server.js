@@ -1,6 +1,7 @@
 require('dotenv').config();
 var express = require('express');
 var bodyParser = require('body-parser');
+var valvelet = require('valvelet');
 var https = require("https");
 var app = express();
 var http = require('http');
@@ -95,17 +96,20 @@ app.post('/findRecentMatches',function(req, specRes) {
         matchIDs.push(obj[i].match_id);
       }
       var listLength = matchIDs.length;
+      var asyncFunction = valvelet(function request(matchID, steamID, messages, specRes, func){
+        retrieveChatLogs(matchID, steamID, messages, specRes, func);
+      },5, 1000);
       for(var i = 0; i < matchIDs.length; i++){
-          retrieveChatLogs(matchIDs[i], steamID, messages, specRes, function(err, response, specRes) {
-            if(err){
-              console.log(err);
-            }
-            counter = counter + 1;
-            console.log('Done ' + counter + ' out of ' + matchIDs.length);
-            if(counter == matchIDs.length){
-              return sentimentAnalysis(messages, specRes);
-            }
-          });
+        asyncFunction(matchIDs[i], steamID, messages, specRes, function(err, response, specRes) {
+          if(err){
+            console.log(err);
+          }
+          counter = counter + 1;
+          console.log('Done ' + counter + ' out of ' + matchIDs.length);
+          if(counter == matchIDs.length){
+            return sentimentAnalysis(messages, specRes);
+          }
+        });
       }
 
     }).on('error', function(e) {
@@ -262,5 +266,4 @@ function addToList(messages, messageList){
   return messageList.concat(messages);
 }
 app.listen(4200);
-app
 console.log('Server started, listening now');
