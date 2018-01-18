@@ -1,3 +1,4 @@
+@import "animate.css";
 h1 {
   font-family:'Radiance-Bold', sans-serif;
   font-size: 5vw;
@@ -87,30 +88,27 @@ i {
   color: #000000;
 }
 
-.example-enter {
-    opacity: 0;
-    transform:   translate(-250px,0);
-    transform: translate3d(-250px,0,0);
+.headerForm-enter {
+    animation: 1.5s bounceInLeft ease;
 }
-.example-enter.example-enter-active {
-	opacity: 1;
-	transition: opacity 1s ease;
-	transform:   translate(0,0);
-	transform: translate3d(0,0,0);
-	transition-property: transform, opacity;
-	transition-duration: 2000ms;
-	transition-timing-function: cubic-bezier(1,1,1,1), linear;
+
+.headerForm-leave {
+    animation:  1.5s bounceOutRight ease;
 }
-.example-leave {
-	opacity: 1;
-	transform:   translate(0,0,0);
-	transform: translate3d(0,0,0);
-  transition-property: transform, opacity;
-	transition-duration:2000ms;
-	transition-timing-function: cubic-bezier(1,1,1,1), linear;
+
+.example-appear {
+  opacity: 0.01;
 }
-.example-leave.example-leave-active {
-	opacity: 0;
-	transform:   translate(250px,0);
-	transform: translate3d(100%,100%,0);
+.example-appear.example-appear-active {
+  opacity: 1;
+  transition: opacity .5s ease-in;
+}
+
+.resultsDiv {
+  margin: 1%;
+  left: 0;
+  float: left;
+  width: 30%;
+  height: 30%;
+  background-color: #1f202d;
 }

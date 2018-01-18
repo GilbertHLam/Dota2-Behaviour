@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import $ from 'jquery';
-import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
+import { CSSTransitionGroup } from 'react-transition-group'
 import Results from './Results'
 class LoadingScreen extends Component {
 
@@ -8,7 +8,7 @@ class LoadingScreen extends Component {
   constructor(){
     super();
     this.state = {
-      messages:['Finding your matches....'],
+      messages:[''],
       counter : 0,
       isLoading : true,
     }
@@ -17,14 +17,14 @@ class LoadingScreen extends Component {
   getScores(){
     var innerRequest = {}
     innerRequest.userID = window.location.href.substring(window.location.href.indexOf('id/')+3);
-    innerRequest.limit = 150;
+    innerRequest.limit = 15;
 
     var requestFunc = function(response, stat){
       console.log(response);
       response = JSON.parse(response);
       this.setState({results: {worst :response.mostNeg, best: response.mostPos}, page: 0, isLoading:false});
     }
-
+    this.state.messages = ['Finding your matches....'];
     setInterval(function() {
       var temp = [ 'Reading chat logs...', 'Analyzing sentiment...', 'You\'ve said some pretty interesting things...', '....this is taking pretty long...try refreshing!','Here....I\'ll refresh it for you!'];
       if(this.state.counter < 5){
@@ -64,10 +64,11 @@ class LoadingScreen extends Component {
         </div>
         </div>
         <h2>
-        <ReactCSSTransitionGroup transitionName="example" transitionEnterTimeout={1000}
-        transitionLeaveTimeout={1000}>
+        <CSSTransitionGroup transitionName="headerForm"
+        transitionEnterTimeout={1500}
+        transitionLeaveTimeout={1500}>
         {items}
-        </ReactCSSTransitionGroup>
+        </CSSTransitionGroup>
         </h2>
         </div>
       ) : (

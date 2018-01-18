@@ -1,3 +1,4 @@
+//===========================================================================================
 require('dotenv').config();
 var express = require('express');
 var bodyParser = require('body-parser');
@@ -8,10 +9,12 @@ var http = require('http');
 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 var strint = require("./strint");
 var passport = require('passport');
-
-
 var async = require('async');
 var SteamStrategy = require('passport-steam').Strategy;
+//===========================================================================================
+
+
+//===========================================================================================
 var steamID;
 
 app.use(bodyParser.urlencoded());
@@ -64,7 +67,12 @@ function(req, res) {
   // Successful authentication, redirect home.
   res.redirect('http://localhost:3000/id/'  + steamID);
 });
+//===========================================================================================
 
+
+
+
+//===========================================================================================
 app.post('/findRecentMatches',function(req, specRes) {
   var asyncTasks = [];
 
@@ -123,6 +131,11 @@ app.post('/findRecentMatches',function(req, specRes) {
 var logError = function(err) { console.log(err); }
 
 function sentimentAnalysis(arrayOfMessages, res){
+  var messagesList = [];
+  for(var i = 0; i < arrayOfMessages.length; i++){
+    messagesList.push(arrayOfMessages[i].message);
+  }
+  console.log(messagesList);
   //console.log(res);
   //console.log(process.env.GOOGLE_APPLICATION_CREDENTIALS);
   var returnObj = {};
@@ -130,7 +143,7 @@ function sentimentAnalysis(arrayOfMessages, res){
     "document": {
       "type": "PLAIN_TEXT",
       "language": "en",
-      "content": arrayOfMessages.join('. '),
+      "content": messagesList.join('. '),
     },
     encodingType: "UTF16",
   };
@@ -181,10 +194,20 @@ function sentimentAnalysis(arrayOfMessages, res){
       console.log("Most Negative: '" + tempMess[mostNegIndex] + "' with a score of " + mostNegative );
       console.log("Most Positive: '" + tempMess[mostPosIndex] + "' with a score of " + mostPositive);
       console.log("Average Score: " + averageScore);
-      returnObj.mostNeg = tempMess[mostNegIndex];
-      returnObj.mostNegScore = mostNegative*100;
-      returnObj.mostPos = tempMess[mostPosIndex];
-      returnObj.mostPosScore = mostPositive*100;
+      returnObj.mostNeg = {
+        message : tempMess[mostNegIndex],
+        score: mostNegative*100,
+        username : '',
+        year :'',
+        won: '',
+      };
+      returnObj.mostPos = {
+        message : tempMess[mostPosIndex],
+        score : mostPositive*100,
+        username :'' ,
+        year :'',
+        won: '',
+      };
       returnObj.averageScore = averageScore;
       return res.end(JSON.stringify(returnObj));
     });
@@ -201,7 +224,7 @@ function sentimentAnalysis(arrayOfMessages, res){
 }
 
 function retrieveChatLogs(matchID, steamID, messages, specialRes, callback){
-  var nickName;
+  var nickName, won, team, deaths,kills,assists,kda,team;
   var err;
   var options = {
     host: 'api.opendota.com',
@@ -229,15 +252,26 @@ function retrieveChatLogs(matchID, steamID, messages, specialRes, callback){
         if(obj.players != null) {
           var tempArray = obj.players;
           for(var i = 0; i < 10; i++){
-            if(tempArray[i].account_id == steamID)
-            nickName = tempArray[i].personaname;
+            if(tempArray[i].account_id == steamID){
+              nickName = tempArray[i].personaname;
+              won = tempArray[i].win;
+              deaths = tempArray[i].deaths;
+              kills = tempArray[i].kills;
+              assists = tempArray[i].assists;
+              kda = tempArray[i].kda;
+              if(tempArray[i].isRadiant == 0)
+                team = 'Dire';
+              else {
+                team = 'Radiant';
+              }
+            }
           }
 
           var chatLog = obj.chat;
           if(chatLog != null){
             for(var i = 0; i < chatLog.length; i++){
               if(chatLog[i].type == 'chat' && chatLog[i].unit == nickName && !(chatLog[i].key == 'gg' || chatLog[i].key =='GG' || chatLog[i].key =='Gg')){
-                messages.push(chatLog[i].key);
+                messages.push({message:chatLog[i].key,username: nickName,won:won, team:team,deaths:deaths,kills:kills, assists:assists, kda:kda, team:team});
                 console.log(nickName + ' said "' + chatLog[i].key + '" in match ' + matchID);
               }
             }
