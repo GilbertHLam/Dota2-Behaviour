@@ -6,6 +6,7 @@ import LoadingScreen from './Components/LoadingScreen';
 import Login from './Components/Login';
 import './App.css';
 import './index.css'
+import './animate.css';
 
 class App extends Component {
 
