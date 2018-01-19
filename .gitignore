@@ -57,4 +57,5 @@ typings/
 # dotenv environment variables file
 .env
 
+userID.json
 Project-d07fb49ac754.json
