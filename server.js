@@ -138,23 +138,50 @@ app.post('/findRecentMatches',function(req, specRes) {
 var logError = function(err) { console.log(err); }
 
 function analyzeMatches(matches, specRes, steamID){
-
+  //var
   for(var i = 0; i < matches.length; i++){
     //console.log(matches[i].messages);
-    sentimentAnalysis(matches[i], specRes, steamID, function(steamID, matchObj, returnObj){
+    sentimentAnalysis(matches[i], specRes, steamID, matches, function(matches, steamID, matchObj, returnObj){
       matchObj.messages = returnObj.messages;
-      writeToFirebase(steamID, matchObj);
+      writeToFirebase(steamID, matches);
     });
   }
 }
 
-function writeToFirebase(steamID, writeObj){
-  console.log(writeObj);
+function writeToFirebase(steamID, matchesObj){
+  console.log(matchesObj);
+  var writeObj = {};
+  var mostPositive;
+  var averageScore = 0;
+  var mostNegative;
+  var counter = 0;
+
+  mostPositive = matchesObj[0].messages[0];
+  mostNegative = matchesObj[0].messages[0];
+  for(var i = 0; i < matchesObj.length;i++){
+    for(var x = 0; x < matchesObj[i].messages.length;x++){
+      averageScore = averageScore + matchesObj[i].messages[x].score;
+      if(matchesObj[i].messages[x].score > mostPositive.score){
+        mostPositive = {message : matchesObj[i].messages[x].message, score : matchesObj[i].messages[x].score, matchIndex:i} ;
+      }
+      else if(matchesObj[i].messages[x].score < mostNegative.score){
+        mostNegative = {message : matchesObj[i].messages[x].message, score : matchesObj[i].messages[x].score, matchIndex:i};
+      }
+      counter++;
+    }
+  }
+  averageScore = averageScore*100/counter;
+  console.log("Most Positive: '" + mostPositive.message + "' with a score of " + mostPositive.score );
+  console.log("Most Negative: '" + mostNegative.message + "' with a score of " + mostNegative.score);
+  console.log("Average Score: " + averageScore);
+  writeObj.matches = matchesObj;
+  writeObj.mostPositive = mostPositive;
+  writeObj.mostNegative = mostNegative;
   var userDB = ref.child(steamID);
   userDB.set(writeObj);
 }
 
-function sentimentAnalysis(match, res, steamID, callback){
+function sentimentAnalysis(match, res, steamID, matches,callback){
   //console.log(messagesList);
   var returnObj = {};
   var content = {
@@ -192,7 +219,7 @@ function sentimentAnalysis(match, res, steamID, callback){
         tempMsgObj.score = obj.sentences[p].sentiment.score+(obj.sentences[p].sentiment.magnitude/2);
         returnObj.messages.push(tempMsgObj);
       }
-      callback(steamID, match, returnObj);
+      callback(matches, steamID, match, returnObj);
     });
 
   }).on('error', function(e){
@@ -200,34 +227,12 @@ function sentimentAnalysis(match, res, steamID, callback){
   });
   req.write(JSON.stringify(content));
   req.end();
-  /**
-  var mostPositive;
-  var mostPosIndex = 0;
-  var mostNegIndex = 0;
-  var mostNegative;
-  var averageScore = 0;
-  mostPositive = tempScore[0];
-  mostNegative = tempScore[0];
-  for(var i = 0; i < tempScore.length;i++){
-    if(mostPositive < tempScore[i]) {
-      mostPositive = tempScore[i];
-      mostPosIndex = i;
-    }
-    if(mostNegative > tempScore[i]) {
-      mostNegative = tempScore[i];
-      mostNegIndex = i;
-    }
-    averageScore += tempScore[i];
-  }
-  averageScore = averageScore*100/tempScore.length;
-  console.log("Most Negative: '" + tempMess[mostNegIndex] + "' with a score of " + mostNegative );
-  console.log("Most Positive: '" + tempMess[mostPosIndex] + "' with a score of " + mostPositive);
-  console.log("Average Score: " + averageScore);**/
+
 
 }
 
 function retrieveChatLogs(matchID, steamID, matches, specialRes, callback){
-  var nickName, won, team, deaths,kills,assists,kda,team;
+  var nickName, won, team, deaths,kills,assists,kda,team,direScore,radiantScore,duration,inParty,date, heroID;
   var err;
   var options = {
     host: 'api.opendota.com',
@@ -238,7 +243,6 @@ function retrieveChatLogs(matchID, steamID, matches, specialRes, callback){
       'Content-Type': 'application/json'
     }
   };
-
   var req = https.get(options, function(res) {
     var content = ''
     res.on("data", function (chunk) {
@@ -262,6 +266,11 @@ function retrieveChatLogs(matchID, steamID, matches, specialRes, callback){
               kills = tempArray[i].kills;
               assists = tempArray[i].assists;
               kda = tempArray[i].kda;
+              heroID = tempArray[i].hero_id;
+              if(tempArray[i].party_size)
+                inParty = true;
+              else
+                inParty = false;
               if(tempArray[i].isRadiant == 0)
                 team = 'Dire';
               else {
@@ -270,6 +279,10 @@ function retrieveChatLogs(matchID, steamID, matches, specialRes, callback){
             }
           }
           var arrayOfMessagesThisMatch = [];
+          duration = obj.duration;
+          date = obj.start_time;
+          direScore = obj.dire_score;
+          radiantScore = obj.radiant_score;
           var chatLog = obj.chat;
           if(chatLog != null){
             for(var i = 0; i < chatLog.length; i++){
@@ -278,7 +291,7 @@ function retrieveChatLogs(matchID, steamID, matches, specialRes, callback){
                 console.log(nickName + ' said "' + chatLog[i].key + '" in match ' + matchID);
               }
             }
-            matches.push({messages:arrayOfMessagesThisMatch,username: nickName,won:won, team:team,deaths:deaths,kills:kills, assists:assists, kda:kda, team:team});
+            matches.push({messages:arrayOfMessagesThisMatch,username: nickName,won:won, team:team,deaths:deaths,kills:kills, assists:assists, kda:kda, team:team,direScore:direScore,radiantScore:radiantScore,duration:duration,inParty:inParty,date:date, heroID:heroID,matchID:matchID});
             callback(err, matchID, specialRes);
           }
           else {
