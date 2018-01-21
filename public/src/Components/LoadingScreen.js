@@ -21,8 +21,7 @@ class LoadingScreen extends Component {
 
     var requestFunc = function(response, stat){
       console.log(response);
-      response = JSON.parse(response);
-      this.setState({results: {worst :response.mostNeg, best: response.mostPos}, page: 0, isLoading:false});
+      this.setState({results: response, page: 0, isLoading:false});
     }
     this.state.messages = ['Finding your matches....'];
     setInterval(function() {
