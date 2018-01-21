@@ -1,5 +1,6 @@
 //===========================================================================================
 require('dotenv').config();
+var moment = require('moment');
 var express = require('express');
 var bodyParser = require('body-parser');
 var valvelet = require('valvelet');
@@ -156,28 +157,44 @@ app.post('/findRecentMatches',function(req, specRes) {
 
 
 function analyzeMatches(matches, specRes, steamID){
-  //var
+  var counter = 0;
   for(var i = 0; i < matches.length; i++){
     //console.log(matches[i].messages);
-    sentimentAnalysis(matches[i], specRes, steamID, matches, function(matches, steamID, matchObj, returnObj){
+    sentimentAnalysis(matches[i], specRes, steamID, matches, function( matches, steamID, matchObj, returnObj){
+      counter++;
       matchObj.messages = returnObj.messages;
-      writeToFirebase(steamID, matches);
+      if(counter == matches.length)
+        writeToFirebase(steamID, matches, specRes);
     });
   }
 }
 
-function writeToFirebase(steamID, matchesObj){
+function writeToFirebase(steamID, matchesObj,specRes){
   //console.log(matchesObj);
   var writeObj = {};
   var mostPositive;
   var averageScore = 0;
   var mostNegative;
+  var totalMessages = 0;
+  var negativeMessages = 0;
+  var positiveMessages = 0;
+  var neutralMessages = 0;
   var counter = 0;
 
   mostPositive = matchesObj[0].messages[0];
   mostNegative = matchesObj[0].messages[0];
   for(var i = 0; i < matchesObj.length;i++){
     for(var x = 0; x < matchesObj[i].messages.length;x++){
+      totalMessages++;
+      if(matchesObj[i].messages[x].score > 0){
+        positiveMessages++;
+      }
+      else if(matchesObj[i].messages[x].score < 0){
+        negativeMessages++;
+      }
+      else {
+        neutralMessages++;
+      }
       averageScore = averageScore + matchesObj[i].messages[x].score;
       if(matchesObj[i].messages[x].score > mostPositive.score){
         mostPositive = {message : matchesObj[i].messages[x].message, score : matchesObj[i].messages[x].score, matchIndex:i} ;
@@ -188,15 +205,50 @@ function writeToFirebase(steamID, matchesObj){
       counter++;
     }
   }
-  averageScore = averageScore*100/counter;
+  averageScore = averageScore*1000/counter;
   console.log("Most Positive: '" + mostPositive.message + "' with a score of " + mostPositive.score );
   console.log("Most Negative: '" + mostNegative.message + "' with a score of " + mostNegative.score);
   console.log("Average Score: " + averageScore);
-  writeObj.matches = matchesObj;
-  writeObj.mostPositive = mostPositive;
-  writeObj.mostNegative = mostNegative;
-  var userDB = ref.child(steamID);
-  userDB.set(writeObj);
+  var options = {
+    host: 'api.opendota.com',
+    path: '/api/players/' + steamID,
+    port: 443,
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  };
+  var req = https.get(options, function(res) {
+    var content = ''
+    res.on("data", function (chunk) {
+      content += chunk;
+    })
+    res.on("end",function (){
+      var obj = JSON.parse(content);
+      writeObj.name = obj.profile.personaname;
+      writeObj.image = obj.profile.avatarfull;
+      writeObj.matches = matchesObj;
+      writeObj.mostPositive = mostPositive;
+      writeObj.mostNegative = mostNegative;
+      writeObj.averageScore = averageScore.toFixed(1);;
+      writeObj.negativeMessages = negativeMessages;
+      writeObj.positiveMessages = positiveMessages;
+      writeObj.neutralMessages = neutralMessages;
+      writeObj.totalMessages = totalMessages;
+      var userDB = ref.child(steamID);
+      userDB.set(writeObj);
+      ref.child(steamID).once('value')
+        .then(function (result) {
+          specRes.json(result);
+          specRes.end();
+        });
+    }).on('error', function(e) {
+      console.log("Got error: " + e.message);
+      console.log("Error finding matches! User may not exist or there is a problem with the connection. Returning error to the client");
+    });
+    req.end();
+  });
+
 
 }
 function checkIfInDB(steamID){
@@ -244,7 +296,10 @@ function sentimentAnalysis(match, res, steamID, matches,callback){
       for(var p = 0; p < obj.sentences.length; p ++) {
         var tempMsgObj = {};
         tempMsgObj.message = obj.sentences[p].text.content ;
-        tempMsgObj.score = obj.sentences[p].sentiment.score+(obj.sentences[p].sentiment.magnitude/2);
+        console.log("Message: " + obj.sentences[p].text.content);
+        console.log("Score: " + obj.sentences[p].sentiment.score);
+        console.log("Mag: " + obj.sentences[p].sentiment.magnitude);
+        tempMsgObj.score = obj.sentences[p].sentiment.score;
         returnObj.messages.push(tempMsgObj);
       }
       callback(matches, steamID, match, returnObj);
@@ -283,6 +338,7 @@ function retrieveChatLogs(matchID, steamID, matches, specialRes, callback){
     res.on("end",function (){
       //console.log("Looking at match " + matchID + " for user " + steamID);
       try {
+
         var obj = JSON.parse(content);
         if(obj.players != null) {
           var tempArray = obj.players;
@@ -308,25 +364,32 @@ function retrieveChatLogs(matchID, steamID, matches, specialRes, callback){
           }
           var arrayOfMessagesThisMatch = [];
           duration = obj.duration;
-          date = obj.start_time;
+          date = moment.unix(obj.start_time).format('dddd, MMMM Do, YYYY');
           direScore = obj.dire_score;
           radiantScore = obj.radiant_score;
           var chatLog = obj.chat;
           if(chatLog != null){
             for(var i = 0; i < chatLog.length; i++){
-              if(chatLog[i].type == 'chat' && chatLog[i].unit == nickName && !(chatLog[i].key == 'gg' || chatLog[i].key =='GG' || chatLog[i].key =='Gg')){
+              if(chatLog[i].type == 'chat' && chatLog[i].unit == nickName ){
                 arrayOfMessagesThisMatch.push(chatLog[i].key);
                 console.log(nickName + ' said "' + chatLog[i].key + '" in match ' + matchID);
               }
             }
+            if(arrayOfMessagesThisMatch.length == 0){
+              console.log("NONE");
+              callback(err,matchID,specialRes);
+            }
+            else {
             matches.push({messages:arrayOfMessagesThisMatch,username: nickName,won:won, team:team,deaths:deaths,kills:kills, assists:assists, kda:kda, team:team,direScore:direScore,radiantScore:radiantScore,duration:duration,inParty:inParty,date:date, heroID:heroID,matchID:matchID});
             callback(err, matchID, specialRes);
+          }
           }
           else {
             callback(err, matchID, specialRes);
           }
         }
       }catch(err){
+        console.log(err);
         callback(err, matchID, specialRes);
       }
     }).on('error', function(e) {

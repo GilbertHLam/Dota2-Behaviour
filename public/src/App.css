@@ -3,7 +3,7 @@ h1 {
   font-family:'Radiance-Bold', sans-serif;
   font-size: 5vw;
   color: #af3d27;
-   display: inline;
+  display: inline;
 }
 
 h2 {
@@ -35,11 +35,11 @@ h3 {
   visibility: visible;
 }
 .center {
-   width: 100vw;
-   position: absolute;
-   left: 50%;
-   margin-left: -50vw;
-   margin-top: 35vh;
+  width: 100vw;
+  position: absolute;
+  left: 50%;
+  margin-left: -50vw;
+  margin-top: 35vh;
 }
 
 
@@ -48,11 +48,11 @@ h3 {
 }
 
 .headerForm-enter {
-    animation: 1.5s bounceInLeft ease;
+  animation: 1.5s bounceInLeft ease;
 }
 
 .headerForm-leave {
-    animation:  1.5s bounceOutRight ease;
+  animation:  1.5s bounceOutRight ease;
 }
 
 .example-appear {
@@ -72,24 +72,82 @@ h3 {
 }
 
 .resultsDiv {
-  margin: 1%;
-  left: 0;
   float: left;
-  width: 31%;
-  height: 27%;
+  width: 49%;
+  height: 95%;
   background-color: #1f202d;
   text-align: center;
 }
-
+.summaryDiv{
+  margin: 1% auto;
+  width: 70%;
+  height: 27%;
+  background-color: #1f202d;
+}
+.transparent{
+  background-color: #242634;
+}
+.round {
+  border-radius: 50%;
+  margin-top: 35px;
+  margin-left: 35px;
+  height: 70%;
+  float: left;
+}
+.username {
+  font-family: Roboto,"Droid Sans", Ubuntu,Cantarell, "Fira Sans", Helvetica,Arial,sans-serif;
+  font-size: 3.88vw;
+  font-weight: 100;
+  border-bottom-style: none;
+  padding-bottom: 0;
+  margin-left: 35%;
+  color: white;
+}
+.subContainer{
+  display: inline-block;
+padding: 0 !important;
+margin-right: 50px;
+margin-top: 15px;
+}
+.statsContainer{
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+}
+.miniStats {
+  margin-left: 4vw;
+  position: relative;
+  display:block;
+}
+.miniTitle{
+  font-size: 18px;
+  color: rgba(245, 245, 245, 0.87);
+  display: block;
+  line-height: 36px;
+}
+.miniResult{
+  font-size: 24px;
+  color: rgba(245, 245, 245, 0.54);
+  display: block;
+}
 h4 {
   font-family: Roboto,"Droid Sans", Ubuntu,Cantarell, "Fira Sans", Helvetica,Arial,sans-serif;
   font-size: 1.88vw;
+  font-weight: 100;
   margin-top:10px;
   border-bottom-style: solid;
   border-color: white;
   padding-bottom: 10px;
   border-width: 1px;
-  color: #336391;
+  color: white;
 }
 h5 {
   font-family:'Radiance-SemiBold', sans-serif;

@@ -1,9 +1,9 @@
 /* You can add global styles to this file, and also import other style files */
 
 body {
-  background-color: #242f39;
+  background-color: #242634;
   padding: 0;
-  background-image: url("images/background.jpg");
+  /*background-image: url("images/background.jpg");*/
   overflow-x: hidden;
 }
 @font-face {

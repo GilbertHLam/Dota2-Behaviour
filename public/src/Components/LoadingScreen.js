@@ -17,7 +17,7 @@ class LoadingScreen extends Component {
   getScores(){
     var innerRequest = {}
     innerRequest.userID = window.location.href.substring(window.location.href.indexOf('id/')+3);
-    innerRequest.limit = 15;
+    innerRequest.limit = 200;
 
     var requestFunc = function(response, stat){
       console.log(response);
@@ -34,7 +34,7 @@ class LoadingScreen extends Component {
       else if(this.state.counter > 4 && this.state.isLoading) {
         window.location.reload();
       }
-    }.bind(this), 9000);
+    }.bind(this), 12000);
 
     requestFunc = requestFunc.bind(this);
     $.post("http://localhost:4200/findRecentMatches", innerRequest, requestFunc);
