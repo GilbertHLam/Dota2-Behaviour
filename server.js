@@ -121,7 +121,7 @@ app.post('/findRecentMatches',function(req, specRes) {
             var listLength = matchIDs.length;
             var asyncFunction = valvelet(function request(matchID, steamID, matches, specRes, func){
               retrieveChatLogs(matchID, steamID, matches, specRes, func);
-            },5, 1000);
+            },4, 1000);
             for(var i = 0; i < matchIDs.length; i++){
               asyncFunction(matchIDs[i], steamID, matches, specRes, function(err, response, specRes) {
                 if(err){
@@ -159,10 +159,19 @@ app.post('/findRecentMatches',function(req, specRes) {
 function analyzeMatches(matches, specRes, steamID){
   var counter = 0;
   for(var i = 0; i < matches.length; i++){
-    //console.log(matches[i].messages);
     sentimentAnalysis(matches[i], specRes, steamID, matches, function( matches, steamID, matchObj, returnObj){
       counter++;
+      var average = 0;
       matchObj.messages = returnObj.messages;
+      for(var k = 0; k < matchObj.messages.length; k++){
+        average = average + matchObj.messages[k].score;
+      }
+      average = average * 100/matchObj.messages.length;
+      matchObj.average = average.toFixed(1);
+      if(isNaN(matchObj.average)){
+        console.log(matchObj);
+        matches.splice(matches.indexOf(matchObj),1);
+      }
       if(counter == matches.length)
         writeToFirebase(steamID, matches, specRes);
     });
@@ -230,7 +239,7 @@ function writeToFirebase(steamID, matchesObj,specRes){
       writeObj.matches = matchesObj;
       writeObj.mostPositive = mostPositive;
       writeObj.mostNegative = mostNegative;
-      writeObj.averageScore = averageScore.toFixed(1);;
+      writeObj.averageScore = averageScore.toFixed(1);
       writeObj.negativeMessages = negativeMessages;
       writeObj.positiveMessages = positiveMessages;
       writeObj.neutralMessages = neutralMessages;
@@ -295,12 +304,16 @@ function sentimentAnalysis(match, res, steamID, matches,callback){
 
       for(var p = 0; p < obj.sentences.length; p ++) {
         var tempMsgObj = {};
-        tempMsgObj.message = obj.sentences[p].text.content ;
-        console.log("Message: " + obj.sentences[p].text.content);
-        console.log("Score: " + obj.sentences[p].sentiment.score);
-        console.log("Mag: " + obj.sentences[p].sentiment.magnitude);
+        tempMsgObj.message = obj.sentences[p].text.content;
         tempMsgObj.score = obj.sentences[p].sentiment.score;
         returnObj.messages.push(tempMsgObj);
+      }
+      if(returnObj.messages.length == 0){
+          var tempMsgObj = {};
+        tempMsgObj.message = 'PLACEHOLDER';
+        tempMsgObj.score = 0;
+        returnObj.messages.push(tempMsgObj);
+
       }
       callback(matches, steamID, match, returnObj);
     });
@@ -375,22 +388,19 @@ function retrieveChatLogs(matchID, steamID, matches, specialRes, callback){
                 console.log(nickName + ' said "' + chatLog[i].key + '" in match ' + matchID);
               }
             }
-            if(arrayOfMessagesThisMatch.length == 0){
-              console.log("NONE");
-              callback(err,matchID,specialRes);
+            if(arrayOfMessagesThisMatch.length != 0){
+              matches.push({messages:arrayOfMessagesThisMatch,username: nickName,won:won, team:team,deaths:deaths,kills:kills, assists:assists, kda:kda, team:team,direScore:direScore,radiantScore:radiantScore,duration:duration,inParty:inParty,date:date, heroID:heroID,matchID:matchID});
+
             }
-            else {
-            matches.push({messages:arrayOfMessagesThisMatch,username: nickName,won:won, team:team,deaths:deaths,kills:kills, assists:assists, kda:kda, team:team,direScore:direScore,radiantScore:radiantScore,duration:duration,inParty:inParty,date:date, heroID:heroID,matchID:matchID});
-            callback(err, matchID, specialRes);
-          }
+            return callback(err,matchID,specialRes);
           }
           else {
-            callback(err, matchID, specialRes);
+            return callback(err, matchID, specialRes);
           }
         }
       }catch(err){
         console.log(err);
-        callback(err, matchID, specialRes);
+        return callback(err, matchID, specialRes);
       }
     }).on('error', function(e) {
       console.log("Got error: " + e.message);
