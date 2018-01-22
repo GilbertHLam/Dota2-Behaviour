@@ -13,8 +13,9 @@ h2 {
 }
 
 h3 {
-  font-family:'Helvetica', sans-serif;
+  font-family:'Radiance-Bold', sans-serif;
   font-size: 2.88vw;
+  font-weight: 100;
   margin-top:0vh;
   color: #336391;
 }
