@@ -32,3 +32,5 @@ Here are the list of programming languages, APIs and other tools I used:
 * Update user UI
 * Include more statistics (average sentiment of messages in games won vs lost, difference when playing different heroes, difference when user's are playing alone vs with friends, etc...)
 * Deploy onto server
+
+![Screenshot Here](https://raw.githubusercontent.com/GilbertHLam/Dota2-Behaviour/master/screenshot.png)
