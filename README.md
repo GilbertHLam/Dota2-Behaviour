@@ -15,17 +15,18 @@ Dota2-Behaviour is a webapp created in ReactJS that aims to help players reflect
 Here are the list of programming languages, APIs and other tools I used:
 
 * [NodeJS] - Backend Server
+* [Firebase] - Stores match data to reduce api calls
 * [OpenDota API] - For retrieving the user's matches and chat logs for each match
 * [ReactJS] - Frontend framework
 * [Google Natural Language API] - Sentiment analysis for the user's messages
-* [OAuth 2.0] - Retreiving user IDs from Valve servers
+* [OAuth 2.0] - Retrieving user IDs from Valve servers
 
 
 # Limitations
 
 * OpenDota API is only able to retrieve messages sent to the game's All Chat. (In my experience most players make rude comments towards their teammates on Team Chat).
 
-* Google Natural Language API does not understand the game's slang that well. 
+* Google Natural Language API does not understand the game's slang that well.
 
 # TODO
 * Update user UI

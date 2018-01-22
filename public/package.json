@@ -17,6 +17,7 @@
     "react-addons-css-transition-group": "^15.6.2",
     "react-axios": "1.0.3",
     "react-dom": "^16.0.0",
+    "react-easy-chart": "^1.0.0",
     "react-scripts": "1.0.14",
     "react-transition-group": "^1.2.1"
   },
